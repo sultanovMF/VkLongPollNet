@@ -41,7 +41,7 @@ namespace hueta
             var vkApi = new VkApi(services);
             
             vkApi.Authorize(new ApiAuthParams { AccessToken = "access_token" });
-            var longPollServer = vkApi.Groups.GetLongPollServer(1);
+            var longPollServer = vkApi.Groups.GetLongPollServer(1/*укажите здесь id группы*/);
             var longPoll = new LongPoll(longPollServer, services);
             await longPoll.StartListening();
         }
