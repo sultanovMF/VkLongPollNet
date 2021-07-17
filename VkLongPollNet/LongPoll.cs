@@ -105,7 +105,7 @@ namespace VkLongPollNet
         // Или с помощью метода Groups.setLongPollSettings
         public event MessageNewHandler MessageNew;
         public event MessageReplyHandler MessageReply;
-
+        public event MessageEditHandler MessageEdit;
         /// <summary>
         /// Основное поле, содержащее поля Ts, Server и Key, небходимые для корректной работы LongPoll.
         /// </summary>
@@ -154,7 +154,7 @@ namespace VkLongPollNet
         /// <param name="version">версия</param>
         public async Task StartListening(int wait = 20, int mode = 2, int version = 2)
         {
-            _logger.LogInformation($"Start listening....");
+            _logger.LogDebug($"Start listening LongPoll....");
             // TODO запретить дважды вызывать метод  StartListening или как-то обезопасить этот вызов
 
             // Создаем токен, позволяющий пользователю остановить сервер
@@ -172,8 +172,7 @@ namespace VkLongPollNet
                     // Далее определяется тип события и вызываетя соответствующее событие
                     // Поскольку в ответе к Api не было понятно, какой тип события был возращен
                     // Необходимо дополнительно десериализовать каждый объект в уже установленный тип
-                    
-                    _logger.LogInformation($"New event: {update.Type}.\n Object: {update.Object}");
+
                     switch (update.Type)
                     {
                         case "message_new":
@@ -183,6 +182,7 @@ namespace VkLongPollNet
                             MessageReply?.Invoke(this, update.Object.ToObject<MessageReplyArgs>());
                             break;
                         case "message_edit":
+                            MessageEdit?.Invoke(this, update.Object.ToObject<MessageEditArgs>());
                             break;
                         case "message_allow":
                             break;
@@ -202,7 +202,7 @@ namespace VkLongPollNet
         /// </summary>
         public void StopListening()
         {
-            _logger.LogInformation($"Stop listening....");
+            _logger.LogDebug($"Stop listening LongPoll...");
             this._cancellationTokenSource?.Dispose();
         }
 
@@ -224,6 +224,8 @@ namespace VkLongPollNet
             };
             var response = await httpClient.GetAsync(uriBuilder.Uri);
             response.EnsureSuccessStatusCode();
+            
+            _logger?.LogDebug($"LongPoll response:{Environment.NewLine}{Utilities.PrettyPrintJson(await response.Content.ReadAsStringAsync())}");
             return JsonConvert.DeserializeObject<LongPollEventRoot>(await response.Content.ReadAsStringAsync());
         }
     }
