@@ -30,6 +30,7 @@ namespace hueta
             
             var services = new ServiceCollection();
             
+            
             services.AddLogging(builder =>
             {
                 builder.ClearProviders();
