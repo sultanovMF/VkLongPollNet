@@ -27,10 +27,9 @@ namespace hueta
                     rollingInterval: RollingInterval.Day,
                     rollOnFileSizeLimit: true)
                 .CreateLogger();
-            // Контейнер для инверсии зависимостей
+            
             var services = new ServiceCollection();
-
-            // Регистрация логгера
+            
             services.AddLogging(builder =>
             {
                 builder.ClearProviders();
