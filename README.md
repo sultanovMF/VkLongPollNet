@@ -12,12 +12,12 @@
 class Program
 {
     // Создаем объект VkAPi
-    static private VkApi vkApi = new VkApi();
+    private static readonly VkApi VkApi = new VkApi();
     // Обработчик события входящего сообщения
-    public static void MessageNewHandler(object sender, MessageNewArgs messageNewArgs)
+    private static void MessageNewHandler(object sender, MessageNewArgs messageNewArgs)
     {
         // Если пришло сообщение, то отправляем сообщение "test" в тот же чат
-        vkApi.Messages.Send(new MessagesSendParams()
+        VkApi.Messages.Send(new MessagesSendParams()
         {
             PeerId = messageNewArgs.Message.PeerId,
             Message = "test",
@@ -28,11 +28,9 @@ class Program
     static async Task Main(string[] args)
     {
         // Вводим ключ доступа сообщества, авторизируем бота 
-        vkApi.Authorize(new ApiAuthParams { AccessToken = "access_token" });
-        // Необходимо получить id сообщества, от лица которого работает бот
-        ulong groupId = 111111111;
-        // Для того, чтобы получить данные, необходимые для запуска LongPoll
-        var longPollServer = vkApi.Groups.GetLongPollServer(groupId);
+        VkApi.Authorize(new ApiAuthParams { AccessToken = "access_token" });
+		// Вместо единицы подставьте id вашей группы (в формате unsigned long)
+        var longPollServer = VkApi.Groups.GetLongPollServer(1);
         // Создаем LongPoll сервер
         var longPoll = new LongPoll(longPollServer);
         // Добавляем обработчик событий
@@ -41,7 +39,6 @@ class Program
         await longPoll.StartListening();
     }
 }
-
 ```
 
 Кроме того, сервер не обязательно вызывать в ассинхронном режиме. Он может быть остановлен.

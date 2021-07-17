@@ -5,11 +5,13 @@ using System.Net.Http;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using VkNet.Model;
+using VkNet.Utils;
 
 namespace VkLongPollNet
 {
@@ -118,6 +120,7 @@ namespace VkLongPollNet
         /// Логгирование
         /// </summary>
         private readonly ILogger _logger;
+        private readonly ServiceProvider _serviceProvider;
 
         /// <remarks>
         /// Библиотека позиционирует себя как модуль библиотеки <a href="https://github.com/vknet/vk">VkNet</a>
@@ -126,13 +129,21 @@ namespace VkLongPollNet
         /// </remarks>
         /// <param name="longPollServerResponse">Объект содержащий поля Ts, Server и Key, небходимые для корректной работы LongPoll.</param>
         /// <param name="logger">Логгер</param>
+        /// <param name="serviceCollection">TODO</param>
         /// <seealso cref="LongPollServerResponse"/>
-        public LongPoll(LongPollServerResponse longPollServerResponse, ILogger logger = null)
+        public LongPoll(LongPollServerResponse longPollServerResponse,IServiceCollection serviceCollection = null)
         {
             this._longPollServerResponse = longPollServerResponse;
-            this._logger = logger ?? NullLogger.Instance;
-        }
+            
+            var container = serviceCollection ?? new ServiceCollection();
 
+            container.RegisterDefaultDependencies();
+
+            _serviceProvider = container.BuildServiceProvider();
+
+            _logger = _serviceProvider.GetService<ILogger<LongPoll>>();
+        }
+        
         /// <summary>
         /// Метод Listen автоматически отправляет запросы на получение событий к LongPoll серверу.
         /// Когда приходит ответ, определяется тип события, а затем вызывается <c>event?.Invoke()</c>, который требуется обработать пользователю.
@@ -143,7 +154,6 @@ namespace VkLongPollNet
         /// <param name="version">версия</param>
         public async Task StartListening(int wait = 20, int mode = 2, int version = 2)
         {
-            Console.WriteLine("jasndasldnasdlnasldnalsd");
             _logger.LogInformation($"Start listening....");
             // TODO запретить дважды вызывать метод  StartListening или как-то обезопасить этот вызов
 
@@ -163,7 +173,7 @@ namespace VkLongPollNet
                     // Поскольку в ответе к Api не было понятно, какой тип события был возращен
                     // Необходимо дополнительно десериализовать каждый объект в уже установленный тип
                     
-                    _logger.LogInformation($"New event: {update.Type}\nInfo: {update.Object.ToString()}");
+                    _logger.LogInformation($"New event: {update.Type}.\n Object: {update.Object}");
                     switch (update.Type)
                     {
                         case "message_new":
@@ -192,6 +202,7 @@ namespace VkLongPollNet
         /// </summary>
         public void StopListening()
         {
+            _logger.LogInformation($"Stop listening....");
             this._cancellationTokenSource?.Dispose();
         }
 
