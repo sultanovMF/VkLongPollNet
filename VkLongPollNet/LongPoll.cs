@@ -106,6 +106,10 @@ namespace VkLongPollNet
         public event MessageNewHandler MessageNew;
         public event MessageReplyHandler MessageReply;
         public event MessageEditHandler MessageEdit;
+        public event MessageAllowHandler MessageAllow;
+        public event MessageDenyHandler MessageDeny;
+        public event MessageTypingStateHandler MessageTypingState;
+
         /// <summary>
         /// Основное поле, содержащее поля Ts, Server и Key, небходимые для корректной работы LongPoll.
         /// </summary>
@@ -116,10 +120,12 @@ namespace VkLongPollNet
         /// Необходим для реализации включения и отключения работы LongPoll сервера
         /// </summary>
         private CancellationTokenSource _cancellationTokenSource;
+
         /// <summary>
         /// Логгирование
         /// </summary>
         private readonly ILogger _logger;
+
         private readonly ServiceProvider _serviceProvider;
 
         /// <remarks>
@@ -131,10 +137,10 @@ namespace VkLongPollNet
         /// <param name="logger">Логгер</param>
         /// <param name="serviceCollection">TODO</param>
         /// <seealso cref="LongPollServerResponse"/>
-        public LongPoll(LongPollServerResponse longPollServerResponse,IServiceCollection serviceCollection = null)
+        public LongPoll(LongPollServerResponse longPollServerResponse, IServiceCollection serviceCollection = null)
         {
             this._longPollServerResponse = longPollServerResponse;
-            
+
             var container = serviceCollection ?? new ServiceCollection();
 
             container.RegisterDefaultDependencies();
@@ -143,7 +149,7 @@ namespace VkLongPollNet
 
             _logger = _serviceProvider.GetService<ILogger<LongPoll>>();
         }
-        
+
         /// <summary>
         /// Метод Listen автоматически отправляет запросы на получение событий к LongPoll серверу.
         /// Когда приходит ответ, определяется тип события, а затем вызывается <c>event?.Invoke()</c>, который требуется обработать пользователю.
@@ -185,10 +191,13 @@ namespace VkLongPollNet
                             MessageEdit?.Invoke(this, update.Object.ToObject<MessageEditArgs>());
                             break;
                         case "message_allow":
+                            MessageAllow?.Invoke(this, update.Object.ToObject<MessageAllowArgs>());
                             break;
                         case "message_deny":
+                            MessageDeny?.Invoke(this, update.Object.ToObject<MessageDenyArgs>());
                             break;
                         case "message_typing_state":
+                            MessageTypingState?.Invoke(this, update.Object.ToObject<MessageTypingStateArgs>());
                             break;
                         case "message_event":
                             break;
@@ -224,8 +233,9 @@ namespace VkLongPollNet
             };
             var response = await httpClient.GetAsync(uriBuilder.Uri);
             response.EnsureSuccessStatusCode();
-            
-            _logger?.LogDebug($"LongPoll response:{Environment.NewLine}{Utilities.PrettyPrintJson(await response.Content.ReadAsStringAsync())}");
+
+            _logger?.LogDebug(
+                $"LongPoll response:{Environment.NewLine}{Utilities.PrettyPrintJson(await response.Content.ReadAsStringAsync())}");
             return JsonConvert.DeserializeObject<LongPollEventRoot>(await response.Content.ReadAsStringAsync());
         }
     }
