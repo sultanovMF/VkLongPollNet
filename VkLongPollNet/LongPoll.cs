@@ -5,6 +5,8 @@ using System.Net.Http;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using VkNet.Model;
@@ -32,13 +34,16 @@ namespace VkLongPollNet
         /// Чтобы LongPoll сервер работал непрерывно нужно менять <c>ts</c> при получении нового события.
         /// </para>
         /// </summary>
-        [JsonPropertyName("ts")] public string Ts { get; set; }
+        [JsonPropertyName("ts")]
+        public string Ts { get; set; }
+
         /// <summary>
         /// <seealso cref="LongPollEventUpdate"/>
         /// </summary>
-        [JsonPropertyName("updates")] public List<LongPollEventUpdate> Updates { get; set; }
+        [JsonPropertyName("updates")]
+        public List<LongPollEventUpdate> Updates { get; set; }
     }
-    
+
     /// <summary>
     /// Класс для десериализации свойства "updates" из json-ответа, полученного при запросе LongPoll события.
     /// </summary>
@@ -56,7 +61,9 @@ namespace VkLongPollNet
         /// <remarks>
         /// <a href="https://vk.com/dev/groups_events">Типы событий и прочее </a>
         /// </remarks>
-        [JsonPropertyName("type")] public string Type { get; set; }
+        [JsonPropertyName("type")]
+        public string Type { get; set; }
+
         /// <remarks>
         /// Поле Object имеет тип JObject, поскольку заранее не извествен тип события.
         /// В связи с этим каждый раз нужно десериализовать объект вручную.
@@ -66,16 +73,22 @@ namespace VkLongPollNet
         /// MessageNewArgs messageNewArgs = update.Object.ToObject<MessageNewArgs/>();
         /// </code>
         /// </example>
-        [JsonPropertyName("object")] public JObject Object { get; set; }
+        [JsonPropertyName("object")]
+        public JObject Object { get; set; }
+
         /// <summary>
         /// TODO
         /// </summary>
-        [JsonPropertyName("group_id")] public int GroupId { get; set; }
+        [JsonPropertyName("group_id")]
+        public int GroupId { get; set; }
+
         /// <summary>
         /// TODO
         /// </summary>
-        [JsonPropertyName("event_id")] public string EventId { get; set; }
+        [JsonPropertyName("event_id")]
+        public string EventId { get; set; }
     }
+
     /// <summary>
     /// <para>
     /// Класс для работы с VK LongPoll API
@@ -90,6 +103,7 @@ namespace VkLongPollNet
         // Или с помощью метода Groups.setLongPollSettings
         public event MessageNewHandler MessageNew;
         public event MessageReplyHandler MessageReply;
+
         /// <summary>
         /// Основное поле, содержащее поля Ts, Server и Key, небходимые для корректной работы LongPoll.
         /// </summary>
@@ -100,18 +114,25 @@ namespace VkLongPollNet
         /// Необходим для реализации включения и отключения работы LongPoll сервера
         /// </summary>
         private CancellationTokenSource _cancellationTokenSource;
-        
+        /// <summary>
+        /// Логгирование
+        /// </summary>
+        private readonly ILogger _logger;
+
         /// <remarks>
         /// Библиотека позиционирует себя как модуль библиотеки <a href="https://github.com/vknet/vk">VkNet</a>
         /// Поэтому реализована она с помощью соответсвующих классов и методов из неё.
         /// Работать независимо от VkNet она не умеет!
         /// </remarks>
         /// <param name="longPollServerResponse">Объект содержащий поля Ts, Server и Key, небходимые для корректной работы LongPoll.</param>
+        /// <param name="logger">Логгер</param>
         /// <seealso cref="LongPollServerResponse"/>
-        public LongPoll(LongPollServerResponse longPollServerResponse)
+        public LongPoll(LongPollServerResponse longPollServerResponse, ILogger logger = null)
         {
             this._longPollServerResponse = longPollServerResponse;
+            this._logger = logger ?? NullLogger.Instance;
         }
+
         /// <summary>
         /// Метод Listen автоматически отправляет запросы на получение событий к LongPoll серверу.
         /// Когда приходит ответ, определяется тип события, а затем вызывается <c>event?.Invoke()</c>, который требуется обработать пользователю.
@@ -121,9 +142,11 @@ namespace VkLongPollNet
         /// <param name="mode">дополнительные опции ответа.</param>
         /// <param name="version">версия</param>
         public async Task StartListening(int wait = 20, int mode = 2, int version = 2)
-        { 
+        {
+            Console.WriteLine("jasndasldnasdlnasldnalsd");
+            _logger.LogInformation($"Start listening....");
             // TODO запретить дважды вызывать метод  StartListening или как-то обезопасить этот вызов
-            
+
             // Создаем токен, позволяющий пользователю остановить сервер
             _cancellationTokenSource = new CancellationTokenSource();
             // Работаем до тех пор, пока токен активен
@@ -139,6 +162,8 @@ namespace VkLongPollNet
                     // Далее определяется тип события и вызываетя соответствующее событие
                     // Поскольку в ответе к Api не было понятно, какой тип события был возращен
                     // Необходимо дополнительно десериализовать каждый объект в уже установленный тип
+                    
+                    _logger.LogInformation($"New event: {update.Type}\nInfo: {update.Object.ToString()}");
                     switch (update.Type)
                     {
                         case "message_new":
@@ -157,11 +182,11 @@ namespace VkLongPollNet
                             break;
                         case "message_event":
                             break;
-                        
                     }
                 }
             }
         }
+
         /// <summary>
         /// Останавливает LongPoll сервер
         /// </summary>
@@ -169,6 +194,7 @@ namespace VkLongPollNet
         {
             this._cancellationTokenSource?.Dispose();
         }
+
         /// <summary>
         /// Формирует запрос к LongPoll Server и возвращает десериализованный ответ от сервера.
         /// Для детального описания аргументов см. документацию: <a href="https://vk.com/dev/using_longpoll?f=1.%20%D0%9F%D0%BE%D0%B4%D0%BA%D0%BB%D1%8E%D1%87%D0%B5%D0%BD%D0%B8%D0%B5">Vk API</a>

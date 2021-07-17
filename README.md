@@ -30,7 +30,7 @@ class Program
         // Вводим ключ доступа сообщества, авторизируем бота 
         vkApi.Authorize(new ApiAuthParams { AccessToken = "access_token" });
         // Необходимо получить id сообщества, от лица которого работает бот
-        int groupId = 111111111;
+        ulong groupId = 111111111;
         // Для того, чтобы получить данные, необходимые для запуска LongPoll
         var longPollServer = vkApi.Groups.GetLongPollServer(groupId);
         // Создаем LongPoll сервер
