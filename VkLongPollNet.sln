@@ -4,9 +4,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VkLongPollNet", "VkLongPoll
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReplayOnMessage", "examples\ReplayOnMessage\ReplayOnMessage.csproj", "{FF2D4314-E7ED-40FA-92A4-4D8308F82485}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SerilogExample", "..\examples\SerilogExample\SerilogExample.csproj", "{27C753A0-BC2A-4418-B800-9DE691C2DDAA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "hueta", "..\examples\hueta\hueta.csproj", "{27C753A0-BC2A-4418-B800-9DE691C2DDAA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Simple", "examples\Simple\Simple.csproj", "{CF761F70-2EFD-480A-9D39-2F3294B9F8D4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SerilogExample", "examples\SerilogExample\SerilogExample.csproj", "{CF761F70-2EFD-480A-9D39-2F3294B9F8D4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
