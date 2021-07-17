@@ -38,12 +38,21 @@ class Program
         // Добавляем обработчик событий
         longPoll.MessageNew += MessageNewHandler;
         // Запускаем сервер
-        await longPoll.Listen();
+        await longPoll.StartListening();
     }
 }
 
 ```
 
+Кроме того, сервер не обязательно вызывать в ассинхронном режиме.
+```c#
+...
+longPoll.StartListening();
+Task.Delay(60*1000);
+LongPoll.StopListening();
+// Сервер больше не выкидывает события
+...
+```
 ## Contributing
 Буду благодарен если кто-нибудь поможет в распространении и улучшении работы библиотеки. 
 ## License
